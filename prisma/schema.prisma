@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Supervisor {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  fellows   Fellow[]
+  createdAt DateTime @default(now())
+}
+
+model Fellow {
+  id           String     @id @default(uuid())
+  name         String
+  supervisor   Supervisor @relation(fields: [supervisorId], references: [id])
+  supervisorId String
+  sessions     Session[]
+  createdAt    DateTime   @default(now())
+}
+
+model Session {
+  id         String        @id @default(uuid())
+  fellow     Fellow        @relation(fields: [fellowId], references: [id])
+  fellowId   String
+  groupId    String
+  date       DateTime
+  status     SessionStatus @default(PENDING)
+  transcript String        @db.Text
+
+  analysis SessionAnalysis?
+  review   SupervisorReview?
+
+  createdAt DateTime @default(now())
+}
+
+model SessionAnalysis {
+  id        String  @id @default(uuid())
+  session   Session @relation(fields: [sessionId], references: [id])
+  sessionId String  @unique
+
+  summary String
+
+  contentScore         Int
+  contentJustification String
+
+  facilitationScore         Int
+  facilitationJustification String
+
+  safetyScore         Int
+  safetyJustification String
+
+  riskFlag  Boolean
+  riskQuote String?
+
+  createdAt DateTime @default(now())
+}
+
+model SupervisorReview {
+  id        String  @id @default(uuid())
+  session   Session @relation(fields: [sessionId], references: [id])
+  sessionId String  @unique
+
+  finalStatus SessionStatus
+  notes       String?
+
+  reviewedAt DateTime @default(now())
+}
+
+enum SessionStatus {
+  PENDING
+  PROCESSED
+  FLAGGED
+  SAFE
+}
