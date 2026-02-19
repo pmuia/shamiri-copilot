@@ -45,7 +45,7 @@ No extra text.
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0.2,
-    response_format: { type: "json_object" }, // 🔥 Forces JSON
+    response_format: { type: "json_object" },
     messages: [
       { role: "system", content: prompt },
       { role: "user", content: transcript },
@@ -62,8 +62,7 @@ No extra text.
 
   let parsed: unknown;
 
-  try {
-    // In case model wraps JSON in markdown
+  try {  
     const cleaned = content.replace(/```json|```/g, "").trim();
     parsed = JSON.parse(cleaned);
   } catch (err) {

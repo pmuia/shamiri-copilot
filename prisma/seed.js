@@ -1,4 +1,4 @@
-require("dotenv").config(); // <-- make sure this is first
+require("dotenv").config();
 
 console.log("DATABASE_URL:", process.env.DATABASE_URL);
 const { PrismaClient } = require("@prisma/client");

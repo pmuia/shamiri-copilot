@@ -2,10 +2,6 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import AnalyzeButton from "@/components/AnalyzeButton";
 
-/**
- * Define the exact shape we use.
- * This removes ALL Prisma inference issues.
- */
 type SessionWithRelations = {
   id: string;
   groupId: string;
