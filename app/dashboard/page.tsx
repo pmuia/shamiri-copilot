@@ -3,8 +3,7 @@ import Link from "next/link";
 import AnalyzeButton from "@/components/AnalyzeButton";
 
 /**
- * Helper function to fetch sessions.
- * This allows TypeScript to correctly infer the return type.
+ * Typed data fetcher
  */
 async function getSessions() {
   return prisma.session.findMany({
@@ -19,13 +18,8 @@ async function getSessions() {
   });
 }
 
-/**
- * Automatically infer the correct type
- */
-type SessionWithRelations = Awaited<ReturnType<typeof getSessions>>[number];
-
 export default async function DashboardPage() {
-  const sessions = await getSessions();
+  const sessions: Awaited<ReturnType<typeof getSessions>> = await getSessions();
 
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-10">
@@ -33,41 +27,50 @@ export default async function DashboardPage() {
         <Header sessions={sessions} />
 
         <div className="mt-8 space-y-4">
-          {sessions.map((session) => {
-            const status =
-              session.review?.finalStatus ||
-              (session.analysis?.riskFlag
-                ? "FLAGGED"
-                : session.analysis
-                  ? "PROCESSED"
-                  : "PENDING");
+          {sessions.map(
+            (session: Awaited<ReturnType<typeof getSessions>>[number]) => {
+              const status =
+                session.review?.finalStatus ||
+                (session.analysis?.riskFlag
+                  ? "FLAGGED"
+                  : session.analysis
+                    ? "PROCESSED"
+                    : "PENDING");
 
-            return (
-              <Link
-                key={session.id}
-                href={`/session/${session.id}`}
-                className="block"
-              >
-                <SessionCard
-                  id={session.id}
-                  fellow={session.fellow.name}
-                  group={session.groupId}
-                  date={session.date}
-                  status={status}
-                />
-              </Link>
-            );
-          })}
+              return (
+                <Link
+                  key={session.id}
+                  href={`/session/${session.id}`}
+                  className="block"
+                >
+                  <SessionCard
+                    id={session.id}
+                    fellow={session.fellow.name}
+                    group={session.groupId}
+                    date={session.date}
+                    status={status}
+                  />
+                </Link>
+              );
+            },
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function Header({ sessions }: { sessions: SessionWithRelations[] }) {
+/**
+ * Reusable inferred type
+ */
+type SessionType = Awaited<ReturnType<typeof getSessions>>[number];
+
+function Header({ sessions }: { sessions: SessionType[] }) {
   const total = sessions.length;
 
-  const flagged = sessions.filter((s) => s.analysis?.riskFlag).length;
+  const flagged = sessions.filter(
+    (s: SessionType) => s.analysis?.riskFlag,
+  ).length;
 
   return (
     <div className="flex justify-between items-center">
@@ -142,7 +145,7 @@ function SessionCard({
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles = {
+  const styles: Record<string, string> = {
     PENDING: "bg-gray-100 text-gray-600",
     PROCESSED: "bg-yellow-100 text-yellow-700",
     FLAGGED: "bg-red-100 text-red-700 border border-red-300",
@@ -152,7 +155,7 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-        styles[status as keyof typeof styles]
+        styles[status] ?? "bg-gray-100 text-gray-600"
       }`}
     >
       {status}
