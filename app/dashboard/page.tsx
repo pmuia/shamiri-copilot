@@ -3,10 +3,26 @@ import Link from "next/link";
 import AnalyzeButton from "@/components/AnalyzeButton";
 
 /**
- * Typed data fetcher
+ * Define the exact shape we use.
+ * This removes ALL Prisma inference issues.
  */
-async function getSessions() {
-  return prisma.session.findMany({
+type SessionWithRelations = {
+  id: string;
+  groupId: string;
+  date: Date;
+  fellow: {
+    name: string;
+  };
+  analysis: {
+    riskFlag: boolean | null;
+  } | null;
+  review: {
+    finalStatus: string | null;
+  } | null;
+};
+
+export default async function DashboardPage() {
+  const sessions = (await prisma.session.findMany({
     include: {
       fellow: true,
       analysis: true,
@@ -15,11 +31,7 @@ async function getSessions() {
     orderBy: {
       date: "desc",
     },
-  });
-}
-
-export default async function DashboardPage() {
-  const sessions: Awaited<ReturnType<typeof getSessions>> = await getSessions();
+  })) as SessionWithRelations[];
 
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-10">
@@ -27,49 +39,42 @@ export default async function DashboardPage() {
         <Header sessions={sessions} />
 
         <div className="mt-8 space-y-4">
-          {sessions.map(
-            (session: Awaited<ReturnType<typeof getSessions>>[number]) => {
-              const status =
-                session.review?.finalStatus ||
-                (session.analysis?.riskFlag
-                  ? "FLAGGED"
-                  : session.analysis
-                    ? "PROCESSED"
-                    : "PENDING");
+          {sessions.map((session: SessionWithRelations) => {
+            const status =
+              session.review?.finalStatus ||
+              (session.analysis?.riskFlag
+                ? "FLAGGED"
+                : session.analysis
+                  ? "PROCESSED"
+                  : "PENDING");
 
-              return (
-                <Link
-                  key={session.id}
-                  href={`/session/${session.id}`}
-                  className="block"
-                >
-                  <SessionCard
-                    id={session.id}
-                    fellow={session.fellow.name}
-                    group={session.groupId}
-                    date={session.date}
-                    status={status}
-                  />
-                </Link>
-              );
-            },
-          )}
+            return (
+              <Link
+                key={session.id}
+                href={`/session/${session.id}`}
+                className="block"
+              >
+                <SessionCard
+                  id={session.id}
+                  fellow={session.fellow.name}
+                  group={session.groupId}
+                  date={session.date}
+                  status={status}
+                />
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
 
-/**
- * Reusable inferred type
- */
-type SessionType = Awaited<ReturnType<typeof getSessions>>[number];
-
-function Header({ sessions }: { sessions: SessionType[] }) {
+function Header({ sessions }: { sessions: SessionWithRelations[] }) {
   const total = sessions.length;
 
   const flagged = sessions.filter(
-    (s: SessionType) => s.analysis?.riskFlag,
+    (s: SessionWithRelations) => s.analysis?.riskFlag,
   ).length;
 
   return (
