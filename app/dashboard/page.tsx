@@ -1,9 +1,21 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import AnalyzeButton from "@/components/AnalyzeButton";
+import { Prisma } from "@prisma/client";
+
+/**
+ * Infer the exact type returned by Prisma including relations
+ */
+type SessionWithRelations = Prisma.SessionGetPayload<{
+  include: {
+    fellow: true;
+    analysis: true;
+    review: true;
+  };
+}>;
 
 export default async function DashboardPage() {
-  const sessions = await prisma.session.findMany({
+  const sessions: SessionWithRelations[] = await prisma.session.findMany({
     include: {
       fellow: true,
       analysis: true,
@@ -51,9 +63,10 @@ export default async function DashboardPage() {
   );
 }
 
-function Header({ sessions }: any) {
+function Header({ sessions }: { sessions: SessionWithRelations[] }) {
   const total = sessions.length;
-  const flagged = sessions.filter((s: any) => s.analysis?.riskFlag).length;
+
+  const flagged = sessions.filter((s) => s.analysis?.riskFlag).length;
 
   return (
     <div className="flex justify-between items-center">
