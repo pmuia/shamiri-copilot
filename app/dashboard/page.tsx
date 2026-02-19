@@ -1,29 +1,31 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import AnalyzeButton from "@/components/AnalyzeButton";
-import { Prisma } from "@prisma/client";
 
 /**
- * Define the exact query shape
+ * Helper function to fetch sessions.
+ * This allows TypeScript to correctly infer the return type.
  */
-const sessionWithRelations = Prisma.validator<Prisma.SessionDefaultArgs>()({
-  include: {
-    fellow: true,
-    analysis: true,
-    review: true,
-  },
-});
+async function getSessions() {
+  return prisma.session.findMany({
+    include: {
+      fellow: true,
+      analysis: true,
+      review: true,
+    },
+    orderBy: {
+      date: "desc",
+    },
+  });
+}
 
 /**
- * Infer the correct return type
+ * Automatically infer the correct type
  */
-type SessionWithRelations = Prisma.SessionGetPayload<
-  typeof sessionWithRelations
->;
+type SessionWithRelations = Awaited<ReturnType<typeof getSessions>>[number];
 
 export default async function DashboardPage() {
-  const sessions: SessionWithRelations[] =
-    await prisma.session.findMany(sessionWithRelations);
+  const sessions = await getSessions();
 
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-10">
