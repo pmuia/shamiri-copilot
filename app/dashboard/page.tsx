@@ -4,27 +4,26 @@ import AnalyzeButton from "@/components/AnalyzeButton";
 import { Prisma } from "@prisma/client";
 
 /**
- * Infer the exact type returned by Prisma including relations
+ * Define the exact query shape
  */
-type SessionWithRelations = Prisma.SessionGetPayload<{
+const sessionWithRelations = Prisma.validator<Prisma.SessionDefaultArgs>()({
   include: {
-    fellow: true;
-    analysis: true;
-    review: true;
-  };
-}>;
+    fellow: true,
+    analysis: true,
+    review: true,
+  },
+});
+
+/**
+ * Infer the correct return type
+ */
+type SessionWithRelations = Prisma.SessionGetPayload<
+  typeof sessionWithRelations
+>;
 
 export default async function DashboardPage() {
-  const sessions: SessionWithRelations[] = await prisma.session.findMany({
-    include: {
-      fellow: true,
-      analysis: true,
-      review: true,
-    },
-    orderBy: {
-      date: "desc",
-    },
-  });
+  const sessions: SessionWithRelations[] =
+    await prisma.session.findMany(sessionWithRelations);
 
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-10">
